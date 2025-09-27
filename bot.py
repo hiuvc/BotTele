@@ -1,4 +1,3 @@
-# ugphone_bot.py
 import os
 import json
 import asyncio
@@ -8,14 +7,14 @@ from colorama import init, Fore
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.helpers import escape_markdown
 import nest_asyncio
-from keep_alive import keep_alive  # import keep_alive.py
 
 # ================= CONFIG =================
 init(autoreset=True)
 nest_asyncio.apply()  # fix "event loop already running" trên Replit
 
-TELEGRAM_TOKEN = "7966232208:AAFQA4sdnz4BhGLfII7Nd8zuYrGzFvULbxM"  # Thay token bot của bạn
+TELEGRAM_TOKEN = "7966232208:AAFQA4sdnz4BhGLfII7Nd8zuYrGzFvULbxM"  # Token bot
 URL = "https://dashboard.kingdev.sbs/tool_ug.php?status"
 MESSAGE_FILE = "stock_message.json"
 
@@ -52,12 +51,16 @@ def get_stock_text():
     status = data.get("status", "unknown")
     last_updated = data.get("last_updated", "unknown")
 
-    text = f"📡 *UGPHONE STOCK STATUS*\nStatus: `{status}`\nMessage: Hiếu Đẹp Zai\n\n"
-    for server, stt in servers.items():
-        icon = "🟢" if stt != "Out of Stock" else "🔴"
-        text += f"{icon} *{server}*: {stt}\n"
+    status_esc = escape_markdown(str(status), version=2)
+    text = f"📡 *UGPHONE STOCK STATUS*\nStatus: `{status_esc}`\nMessage: Hiếu Đẹp Zai\n\n"
 
-    text += f"\n_Lần cập nhật cuối: {last_updated} • Tự động làm mới mỗi 5 phút_"
+    for server, stt in servers.items():
+        server_esc = escape_markdown(str(server), version=2)
+        stt_esc = escape_markdown(str(stt), version=2)
+        icon = "🟢" if stt != "Out of Stock" else "🔴"
+        text += f"{icon} *{server_esc}*: {stt_esc}\n"
+
+    text += f"\n_Lần cập nhật cuối: {escape_markdown(str(last_updated), version=2)} • Tự động làm mới mỗi 5 phút_"
     return text
 
 # ================= TELEGRAM BOT =================
@@ -67,21 +70,21 @@ async def send_or_edit_stock(chat_id, bot):
     """Gửi hoặc edit message stock cho 1 chat"""
     text = get_stock_text()
     message_id = stock_messages.get(chat_id)
-    while True:  # Retry liên tục nếu lỗi
+    while True:  # Retry nếu lỗi
         try:
             if message_id:
                 await bot.edit_message_text(
                     chat_id=chat_id,
                     message_id=message_id,
                     text=text,
-                    parse_mode=ParseMode.MARKDOWN
+                    parse_mode=ParseMode.MARKDOWN_V2
                 )
             else:
-                msg = await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.MARKDOWN)
+                msg = await bot.send_message(chat_id=chat_id, text=text, parse_mode=ParseMode.MARKDOWN_V2)
                 stock_messages[chat_id] = msg.message_id
                 save_stock_messages(stock_messages)
             print(Fore.CYAN + f"♻ Updated stock at {datetime.now().strftime('%H:%M:%S')} in chat {chat_id}")
-            break  # thành công thì thoát loop
+            break
         except Exception as e:
             print(Fore.RED + f"❌ Lỗi khi gửi/edit stock chat {chat_id}: {e}")
             print(Fore.YELLOW + "♻ Thử lại sau 5 giây...")
@@ -119,7 +122,6 @@ async def main():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    keep_alive()  # giữ bot luôn sống trên Replit
     loop = asyncio.get_event_loop()
     loop.create_task(main())
     loop.run_forever()
