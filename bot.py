@@ -1,3 +1,4 @@
+# ugphone_bot.py
 import os
 import json
 import asyncio
@@ -8,10 +9,7 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import nest_asyncio
-from keep_alive import keep_alive
-
-# Trước khi chạy bot
-keep_alive()
+from keep_alive import keep_alive  # import keep_alive.py
 
 # ================= CONFIG =================
 init(autoreset=True)
@@ -121,6 +119,7 @@ async def main():
 
 # ================= RUN =================
 if __name__ == "__main__":
+    keep_alive()  # giữ bot luôn sống trên Replit
     loop = asyncio.get_event_loop()
     loop.create_task(main())
     loop.run_forever()
