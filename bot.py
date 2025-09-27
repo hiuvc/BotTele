@@ -8,6 +8,10 @@ from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 import nest_asyncio
+from keep_alive import keep_alive
+
+# Trước khi chạy bot
+keep_alive()
 
 # ================= CONFIG =================
 init(autoreset=True)
