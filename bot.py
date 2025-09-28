@@ -8,7 +8,7 @@ from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # ================= CONFIG =================
 init(autoreset=True)
-TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE"
+TOKEN = "7966232208:AAFQA4sdnz4BhGLfII7Nd8zuYrGzFvULbxM"
 URL = "https://dashboard.kingdev.sbs/tool_ug.php?status"
 USER_FILE = "user_messages.json"
 CHECK_INTERVAL_SECONDS = 300  # 5 phút
