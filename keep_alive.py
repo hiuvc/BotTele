@@ -1,5 +1,5 @@
 # keep_alive.py
-from flask import Flask
+from flask import Flask, request
 from threading import Thread
 from datetime import datetime
 
@@ -7,8 +7,9 @@ app = Flask('')
 
 @app.route('/')
 def home():
+    ip = request.remote_addr
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[KEEP_ALIVE] Ping received at {now}")
+    print(f"[KEEP_ALIVE] Ping từ {ip} lúc {now}")
     return "✅ Bot is alive!"
 
 def run():
@@ -16,4 +17,5 @@ def run():
 
 def keep_alive():
     t = Thread(target=run)
+    t.daemon = True
     t.start()
