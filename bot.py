@@ -18,7 +18,6 @@ def load_users():
     try:
         with open(USER_FILE, "r") as f:
             data = json.load(f)
-            # Chỉ giữ những entry đúng format
             return {k: v for k, v in data.items() if isinstance(v, dict) and "message_id" in v}
     except:
         return {}
