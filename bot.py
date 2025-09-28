@@ -3,12 +3,12 @@ import asyncio
 import requests
 from datetime import datetime, timezone
 from colorama import init, Fore
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 from telegram import Update, BotCommand
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # ================= CONFIG =================
 init(autoreset=True)
-TOKEN = "7966232208:AAFQA4sdnz4BhGLfII7Nd8zuYrGzFvULbxM"
+TOKEN = "YOUR_TELEGRAM_BOT_TOKEN_HERE"
 URL = "https://dashboard.kingdev.sbs/tool_ug.php?status"
 USER_FILE = "user_messages.json"
 CHECK_INTERVAL_SECONDS = 300  # 5 phút
@@ -61,7 +61,6 @@ def get_stock_text():
 
 # ================= COMMANDS =================
 async def getstock(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Lần đầu gửi stock + lưu message_id"""
     users = load_users()
     chat_id = str(update.effective_chat.id)
     text = get_stock_text()
@@ -81,14 +80,12 @@ async def getstock(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except:
                 pass
 
-    # Nếu chưa có message_id hoặc edit fail → gửi message mới
     msg = await update.message.reply_text(text, parse_mode="Markdown")
     users[chat_id] = {"message_id": msg.message_id}
     save_users(users)
     await update.message.reply_text("✔ Bạn sẽ nhận auto cập nhật stock tại tin nhắn này!")
 
 async def refresh(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Làm mới stock ngay lập tức, edit message cũ"""
     users = load_users()
     chat_id = str(update.effective_chat.id)
     text = get_stock_text()
@@ -106,30 +103,17 @@ async def refresh(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             pass
 
-    # Nếu chưa có message → gửi mới
     msg = await update.message.reply_text(text, parse_mode="Markdown")
     users[chat_id] = {"message_id": msg.message_id}
     save_users(users)
     await update.message.reply_text("✔ Stock đã gửi mới!")
 
-
 # ================= BACKGROUND TASK =================
 async def auto_update(app):
-    """Tự động edit message cũ cho tất cả user"""
     while True:
         users = load_users()
         if users:
             text = get_stock_text()
-            
-            # Nếu status là "error", refresh lại từ server
-            try:
-                data = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=60).json()
-                if data.get("status") == "error":
-                    print(Fore.YELLOW + f"⚠ Status 'error', đang refresh...")
-                    text = get_stock_text()  # refresh lại text
-            except Exception as e:
-                print(Fore.RED + f"❌ Lỗi khi kiểm tra status: {e}")
-
             for chat_id, info in users.items():
                 if not isinstance(info, dict):
                     continue
@@ -147,12 +131,11 @@ async def auto_update(app):
                         print(Fore.RED + f"❌ Không edit được cho {chat_id}: {e}")
         await asyncio.sleep(CHECK_INTERVAL_SECONDS)
 
-
 # ================= MAIN =================
 def main():
     app = ApplicationBuilder().token(TOKEN).build()
 
-    # Thêm command
+    # Commands
     app.add_handler(CommandHandler("getstock_ug", getstock))
     app.add_handler(CommandHandler("refresh", refresh))
 
@@ -162,18 +145,13 @@ def main():
         BotCommand("refresh", "Làm mới stock ngay lập tức"),
     ]
 
-    # Task post_init
-    async def on_startup(app):
-        # Set lệnh await
+    async def post_init(app):
         await app.bot.set_my_commands(commands_list)
-        # Bắt đầu task auto_update nền
         asyncio.create_task(auto_update(app))
 
-    app.post_init = on_startup
+    app.post_init = post_init
 
     print(Fore.GREEN + "🤖 Telegram bot is running...")
-
-    # Chạy bot bằng run_polling() trực tiếp
     app.run_polling()
 
 if __name__ == "__main__":
